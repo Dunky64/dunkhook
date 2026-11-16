@@ -5,3 +5,6 @@ __pycache__/
 .venv/
 build/
 dist/
+
+# day-trader skills: personal trading state (portfolio, orders, broker log)
+trader/
