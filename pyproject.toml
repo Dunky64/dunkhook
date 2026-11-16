@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dunkhook"
+version = "0.1.0"
+description = "Agentic, loop-driven dev tools powered by Claude"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "anthropic>=2.8.0",
+    "packaging>=23",
+    "pytest>=8",
+]
+
+[project.optional-dependencies]
+yaml = ["pyyaml>=6"]
+
+[project.scripts]
+dunkhook = "dunkhook.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["dunkhook*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

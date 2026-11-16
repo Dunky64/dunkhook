@@ -1,0 +1,17 @@
+2024-05-01 10:00:02,113 ERROR app.views unhandled exception
+Traceback (most recent call last):
+  File "/srv/app/views.py", line 41, in get_order
+    order = store.lookup(order_id)
+  File "/srv/app/store.py", line 18, in lookup
+    return ORDERS[order_id]
+KeyError: 'ord_8f14e45f'
+2024-05-01 10:00:09,551 ERROR app.views unhandled exception
+Traceback (most recent call last):
+  File "/srv/app/views.py", line 41, in get_order
+    order = store.lookup(order_id)
+  File "/srv/app/store.py", line 18, in lookup
+    return ORDERS[order_id]
+KeyError: 'ord_1c1e1e1e'
+2024-05-01 10:01:00,002 ERROR app.payments gateway timeout after 3012 ms for order 991
+2024-05-01 10:01:40,410 ERROR app.payments gateway timeout after 5020 ms for order 1234
+{"level": "error", "logger": "app.db", "message": "pool exhausted", "timestamp": "2024-05-01T10:02:00Z", "exc_info": "Traceback (most recent call last):\n  File \"/srv/app/db.py\", line 12, in connect\n    return POOL.get(timeout=1)\nTimeoutError: pool exhausted"}
