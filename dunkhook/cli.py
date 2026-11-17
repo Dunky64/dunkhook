@@ -128,6 +128,32 @@ def cmd_migrate(args) -> int:
     return 0 if all(i.status == "done" for i in cl.items) else 1
 
 
+def cmd_coach(args) -> int:
+    import re
+
+    from .cs2coach import Coach, install_cfg, make_server
+
+    if args.action == "install-cfg":
+        path, _ = install_cfg(args.cfg_dir, args.port)
+        print(f"wrote {path}\nRestart CS2, then run:\n  dunkhook coach run --cfg {path}")
+        return 0
+    m = re.search(r'"token"\s+"([^"]+)"', Path(args.cfg).read_text())
+    if not m:
+        print(f"no auth token in {args.cfg}", file=sys.stderr)
+        return 2
+    llm = None if args.no_ai else _llm(args)
+    coach = Coach(m.group(1), llm=llm)
+    server = make_server(coach, args.port)
+    print(f"coach listening on http://127.0.0.1:{args.port}  (open it in a browser on your second screen)")
+    print("AI tips: " + ("off" if llm is None else f"{args.model}, effort {args.effort}, once per round"))
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    _usage(llm)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="dunkhook", description="Agentic, loop-driven dev tools powered by Claude.")
     common = argparse.ArgumentParser(add_help=False)
@@ -197,6 +223,21 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--test-cmd", help="full suite, run once every item is processed")
     s.add_argument("--commit", action="store_true")
     s.set_defaults(fn=cmd_migrate)
+
+    s = sub.add_parser("coach", help="CS2 live coach overlay (Game State Integration + Claude)")
+    cs = s.add_subparsers(dest="action", required=True)
+    c = cs.add_parser("install-cfg", help="write the GSI cfg into CS2's cfg folder")
+    c.add_argument("cfg_dir", help=r"e.g. ...\steamapps\common\Counter-Strike Global Offensive\game\csgo\cfg")
+    c.add_argument("--port", type=int, default=3000)
+    c = cs.add_parser("run", help="run the coach server and overlay")
+    c.add_argument("--model", default=DEFAULT_MODEL)
+    # Freezetime is ~20s, so the coach defaults to low effort: a quick tip beats a deep one.
+    c.add_argument("--effort", default="low", choices=["low", "medium", "high", "xhigh", "max"])
+    c.add_argument("-v", "--verbose", action="store_true")
+    c.add_argument("--cfg", required=True, help="the gamestate_integration_dunkhook.cfg written by install-cfg")
+    c.add_argument("--port", type=int, default=3000)
+    c.add_argument("--no-ai", action="store_true", help="rules only, no Claude calls")
+    s.set_defaults(fn=cmd_coach)
     return p
 
 

@@ -1,6 +1,6 @@
 # dunkhook
 
-Six agentic, loop-driven dev tools built on Claude. Each one is a loop: the model proposes something, deterministic checks (tests, AST diffs, git) decide whether it stands, and failures are fed back until it passes or the tool gives up cleanly.
+Agentic, loop-driven dev tools built on Claude, plus a CS2 live coach. Each one is a loop: the model proposes something, deterministic checks (tests, AST diffs, git) decide whether it stands, and failures are fed back until it passes or the tool gives up cleanly.
 
 | Command | What it does | What decides "done" |
 |---|---|---|
@@ -113,6 +113,20 @@ Helpers are migrated first, then blueprints, then the module that creates the ap
 
 Problems go back to Claude, up to `--max-attempts` times. After that, the original file is restored and the item is marked failed. Progress is saved after every file, so `run` resumes where it stopped. The full test suite runs once, after every item has been processed.
 
+### 7. CS2 live coach overlay
+
+```bash
+dunkhook coach install-cfg "C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\game\csgo\cfg"
+dunkhook coach run --cfg ".../game/csgo/cfg/gamestate_integration_dunkhook.cfg"   # add --no-ai for rules only
+```
+
+Restart CS2, then open http://127.0.0.1:3000 on a second screen (or a phone pointed at the PC). It reads CS2's official **Game State Integration** feed. The generated cfg asks only for your own player, the map and the round. It does not ask for enemy positions, the bomb's location or grenades, and GSI doesn't give those to a player anyway. When you're dead, GSI sends the teammate you're spectating, and the coach ignores that data.
+
+- **Rules (instant):** the buy call (full buy, save, eco, or a forced buy on the last round of a half or at the enemy's match point) comes from your money and your side's loss bonus. During the round you get a client-side C4 clock with the latest defuse start time (kit or no kit), a low-HP warning, and a reload reminder.
+- **Claude (once per round, at the start of the buy phase):** it reads your last few rounds (kills, deaths, money, equipment value, wins) and gives one focus for the round, under 20 words, plus the pattern it's based on. It runs in the background at effort `low` so it fits inside the buy phase. If the call fails, the rules keep working.
+
+It reads only data Valve provides to third-party tools. It doesn't touch the game's memory, files or input. Some leagues and tournaments (FACEIT, ESEA, LAN events) ban live outside help during matches, so check their rules before using it there.
+
 ## Layout
 
 ```
@@ -123,6 +137,7 @@ dunkhook/logtriage/  parsing + clustering, fixer agent + draft PRs
 dunkhook/scaffold/   OpenAPI codegen + runtime (mock, fake data, validator)
 dunkhook/archaeologist/  git/GitHub tools + investigation agent
 dunkhook/migrate/    AST route extraction, checklist, per-file migrate-verify loop
+dunkhook/cs2coach/   CS2 Game State Integration server, coaching rules, overlay, per-round AI tip
 ```
 
 All model access goes through two primitives in `dunkhook/core/llm.py`:
